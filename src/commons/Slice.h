@@ -3,7 +3,6 @@
 
 
 #include "Shader.h"
-#include "ArrayData.h"
 #include <glad/glad.h>
 #include <vector>
 #include <iostream>
@@ -16,19 +15,20 @@ enum Axis {
 
 class Slice {
 public:
-    Slice (Array2D* data, Axis axis, float loc = 0.0f);
+    //Remove data from here
+    Slice (Axis axis, float loc = 0.0f);
     void move(float delta);
     void draw(Shader &shader);
+    void loadTexture(std::vector<float>* data, int n1, int n2);
 
 private:
     unsigned int vao;
     unsigned int textureID;
-    Array2D* data;
     Axis axis;
     float location;
     std::vector<float> vertices;
+    //Maybe use one set of vertex and transform using model matrix instead
     void loadVertexData();
-    void loadTexture();
     void setupMesh();
 };
 

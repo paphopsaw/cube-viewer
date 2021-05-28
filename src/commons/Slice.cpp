@@ -1,12 +1,12 @@
 #include "Slice.h"
 
 
-Slice::Slice (Array2D* data, Axis axis, float loc) {
+Slice::Slice (Axis axis, float loc) {
     location = loc;
     this->axis = axis;
-    this->data = data;
     loadVertexData();
-    loadTexture();
+
+    glGenTextures(1, &textureID);
     setupMesh();
 }
 void Slice::move(float delta) {
@@ -75,12 +75,8 @@ void Slice::loadVertexData() {
         }
 }
 
-void Slice::loadTexture() {
-    glGenTextures(1, &textureID);
+void Slice::loadTexture(std::vector<float>* data, int n0, int n1) {
     glBindTexture(GL_TEXTURE_2D, textureID);
-    std::cout << data->getData()->size() << "\n";
-    std::cout << data->getN1() << "\n";
-    std::cout << data->getN2() << "\n";
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, data->getN2(), data->getN1(), 0, GL_RED, GL_FLOAT, data->getData()->data());
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, n1, n0, 0, GL_RED, GL_FLOAT, data->data());
     glGenerateMipmap(GL_TEXTURE_2D);
 }

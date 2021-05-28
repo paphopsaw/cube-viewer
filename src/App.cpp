@@ -14,6 +14,7 @@
 
 #include "Slice.h"
 #include "ArrayData.h"
+#include "Memmap.h"
 #include "Shader.h"
 #include "Camera.h"
 #include "config.h"
@@ -36,30 +37,35 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 void processInput(GLFWwindow* window) {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		camera.processKeyboard(FORWARD, deltaTime);
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		camera.processKeyboard(BACKWARD, deltaTime);
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		camera.processKeyboard(LEFT, deltaTime);
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		camera.processKeyboard(RIGHT, deltaTime);
 }
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
-	if (firstMouse) {
-		lastX = xpos;
-		lastY = ypos;
-		firstMouse = false;
-	}
+    int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
+    if (state == GLFW_PRESS)
+    {
+        if (firstMouse) {
+            lastX = xpos;
+            lastY = ypos;
+            firstMouse = false;
+        }
 
-	float xOffset = xpos - lastX;
-	float yOffset = lastY - ypos;
+        float xOffset = lastX - xpos;
+        float yOffset = lastY - ypos;
 
-	lastX = xpos;
-	lastY = ypos;
+        camera.processMouseMovement(xOffset, yOffset);
+    }
+    lastX = xpos;
+    lastY = ypos;
+}
 
-	camera.processMouseMovement(xOffset, yOffset);
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+    double x;
+    double y;
+    glfwGetCursorPos(window, &x, &y);
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+        lastX = x;
+        lastY = y;
+
 }
 
 void scroll_callback(GLFWwindow* window, double xOffset, double yOffset) {
@@ -137,8 +143,14 @@ int main()
 		(rootDir + "/resources/shaders/sliceShader.fs").c_str());
     shader.bind();
 
+    
+    int location = 0;
     Array2D data((rootDir + "/resources/data/z.dat").c_str(), 70, 50);
-    Slice slice(&data, XY);
+    Array3D data3d((rootDir + "/resources/data/mri.dat").c_str(), 256, 256, 256);
+    Slice slice(XY);
+    std::vector<float> mySliceData;
+    data3d.slice(1, 128, &mySliceData);
+    slice.loadTexture(&mySliceData, 256, 256);
 
 
     /* Loop until the user closes the window */
@@ -155,20 +167,15 @@ int main()
         ImGui::NewFrame();
 
         {
-            static float f = 0.0f;
             static int counter = 0;
 
             ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
 
             ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
 
-            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+            ImGui::SliderInt("Location", &location, 0, 100);            // Edit 1 float using a slider from 0.0f to 1.0f
             ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
 
-            if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-                counter++;
-            ImGui::SameLine();
-            ImGui::Text("counter = %d", counter);
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             ImGui::End();
@@ -186,7 +193,6 @@ int main()
         glm::mat4 view = camera.getViewMatrix();
 		glm::mat4 proj = glm::perspective(glm::radians(45.0f), static_cast<float>(scr_width) / static_cast<float>(scr_height), 0.1f, 100.0f);
         glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.6f));
 
         shader.setMat4("view", glm::value_ptr(view));
 		shader.setMat4("proj", glm::value_ptr(proj)); 
