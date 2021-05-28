@@ -19,8 +19,8 @@
 #include "Camera.h"
 #include "config.h"
 
-const unsigned int scr_width = 800;
-const unsigned int scr_height = 600;
+const unsigned int scr_width = 1000;
+const unsigned int scr_height = 800;
 
 Camera camera;
 float deltaTime = 0.0f;
@@ -40,32 +40,28 @@ void processInput(GLFWwindow* window) {
 }
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
-    int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
-    if (state == GLFW_PRESS)
-    {
-        if (firstMouse) {
-            lastX = xpos;
-            lastY = ypos;
-            firstMouse = false;
-        }
-
+    if (firstMouse) {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+    int stateLeft = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
+    int stateMiddle = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT);
+    bool onImGui = ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow)
+                    || ImGui::IsAnyItemActive();
+    if (stateLeft == GLFW_PRESS && !onImGui) {
         float xOffset = lastX - xpos;
         float yOffset = lastY - ypos;
 
         camera.processMouseMovement(xOffset, yOffset);
+    } else if (stateMiddle == GLFW_PRESS && !onImGui) {
+        float xOffset = lastX - xpos;
+        float yOffset = lastY - ypos;
+
+        camera.processMouseMovementMiddle(xOffset, yOffset);
     }
     lastX = xpos;
     lastY = ypos;
-}
-
-void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
-    double x;
-    double y;
-    glfwGetCursorPos(window, &x, &y);
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
-        lastX = x;
-        lastY = y;
-
 }
 
 void scroll_callback(GLFWwindow* window, double xOffset, double yOffset) {
@@ -144,13 +140,11 @@ int main()
     shader.bind();
 
     
-    int location = 0;
+    int location1 = 0;
     Array2D data((rootDir + "/resources/data/z.dat").c_str(), 70, 50);
     Array3D data3d((rootDir + "/resources/data/mri.dat").c_str(), 256, 256, 256);
     Slice slice(XY);
     std::vector<float> mySliceData;
-    data3d.slice(1, 128, &mySliceData);
-    slice.loadTexture(&mySliceData, 256, 256);
 
 
     /* Loop until the user closes the window */
@@ -173,7 +167,7 @@ int main()
 
             ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
 
-            ImGui::SliderInt("Location", &location, 0, 100);            // Edit 1 float using a slider from 0.0f to 1.0f
+            ImGui::SliderInt("Location", &location1, 0, 255);            // Edit 1 float using a slider from 0.0f to 1.0f
             ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
 
 
@@ -189,6 +183,11 @@ int main()
         glViewport(0, 0, display_w, display_h);
         glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT);
+
+
+        data3d.slice(0, location1, &mySliceData);
+        slice.loadTexture(&mySliceData, 256, 256);
+        slice.setLocation(location1);
 
         glm::mat4 view = camera.getViewMatrix();
 		glm::mat4 proj = glm::perspective(glm::radians(45.0f), static_cast<float>(scr_width) / static_cast<float>(scr_height), 0.1f, 100.0f);

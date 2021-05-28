@@ -1,7 +1,7 @@
 #include "Slice.h"
 
 
-Slice::Slice (Axis axis, float loc) {
+Slice::Slice (Axis axis, int loc) {
     location = loc;
     this->axis = axis;
     loadVertexData();
@@ -9,8 +9,8 @@ Slice::Slice (Axis axis, float loc) {
     glGenTextures(1, &textureID);
     setupMesh();
 }
-void Slice::move(float delta) {
-    location += delta;
+void Slice::setLocation(int loc) {
+    location = loc;
 }
 void Slice::draw(Shader &shader) {
     glActiveTexture(GL_TEXTURE0);
@@ -18,6 +18,7 @@ void Slice::draw(Shader &shader) {
     glBindTexture(GL_TEXTURE_2D, textureID);
 
     glBindVertexArray(vao);
+    glUniform1f(glGetUniformLocation(shader.getId(), "location"), ((float) location) / 256.0f);
     glDrawArrays(GL_TRIANGLES, 0, vertices.size());
     glBindVertexArray(0);
 }
@@ -45,12 +46,12 @@ void Slice::setupMesh() {
 void Slice::loadVertexData() {
     if (axis == XY) {
             vertices = {
-                -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-                 1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-                 1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
-                 1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
-                -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-                -1.0f, -1.0f, 0.0f, 0.0f, 0.0f
+                -1.0f, -1.0f, 0.0f, 0.0f, 1.0f,
+                 1.0f, -1.0f, 0.0f, 1.0f, 1.0f,
+                 1.0f,  1.0f, 0.0f, 1.0f, 0.0f,
+                 1.0f,  1.0f, 0.0f, 1.0f, 0.0f,
+                -1.0f,  1.0f, 0.0f, 0.0f, 0.0f,
+                -1.0f, -1.0f, 0.0f, 0.0f, 1.0f
             };
 
 

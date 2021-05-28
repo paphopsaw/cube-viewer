@@ -7,7 +7,7 @@
 
 const float default_speed = 2.5f;
 const float default_sensitivity = 0.5f;
-const float default_zoom = -10.0f;
+const float default_zoom = -5.0f;
 const float default_declination = 0.0f;
 
 
